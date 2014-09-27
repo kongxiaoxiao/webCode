@@ -1,0 +1,190 @@
+<!DOCTYPE  html>
+<html lang="en">
+<head>
+<title>XMLWriteup</title>
+<style type="text/css">
+	form {text-align: center }
+</style>
+<script type="text/javascript">
+var html_text =''
+var xmlDoc
+function viewXML(xmlform)
+{
+	URL = xmlform.URL.value
+	if(URL.length == 0)
+	{
+		alert("Please enter the URL!")
+		return
+	}
+
+	function loadXML(url)
+	{
+		if (window.XMLHttpRequest)
+		{// code for IE7+, Firefox, Chrome, Opera, Safari
+			xmlhttp=new XMLHttpRequest(); // initialize the xmlHttpRequest object
+		}
+		else
+		{// code for IE6, IE5
+			xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.open("GET",url,false); //open, send, responseXML are
+		xmlhttp.send(); //properties of XMLHTTPRequest 
+		//decide whether there is a xmlrequest error which means testing non-exsistant xml file
+		if (xmlhttp.status == 404)
+			{
+				alert("Xml file not found")				
+			}
+		xmlDoc=xmlhttp.responseXML;
+		return xmlDoc
+	}
+
+	xmlDoc = loadXML(URL)
+	// decide whether there is a parser error which means testing a valid xml file	
+	if (window.ActiveXObject) //if IE, simply execute script (due to async prop).
+ 		{
+ 			if (xmlDoc.parseError.errorCode != 0) 
+ 			{
+    			var myErr = xmlDoc.parseError;
+    			generateError(xmlDoc);
+    			hWin = window.open("", "Error", "height=300,width=340");
+    			hWin.document.write(html_text);
+  			} 
+  			else 
+  			{  
+  				generateHTML(xmlDoc);
+            	hWin = window.open("", "Assignment4", "height=800,width=600");
+            	hWin.document.write(html_text)  
+            }
+ 		} 
+ 	else //else if FF, execute script once XML object has loaded
+ 		{  
+ 			if (xmlDoc.documentElement.nodeName == "parsererror")
+ 				{
+ 					alert("Invalid xml file")
+ 					return
+ 				}
+ 			else
+ 				{
+ 					hWin = window.open("","HOMEWORK4","height=1200,width=1000,scrollbars=yes")
+					hWin.document.write(displayTable())
+					hWin.document.close()
+ 				}
+ 		}
+}
+
+
+
+function displayTable()
+{
+	var location_node_list
+	var listingDetails_node_list
+	function addContents(house_node_list,node_name)
+		{
+			ELEMENT_NODE = 1
+			for (j=0;j<house_node_list.length;j++)
+				{
+					if (house_node_list.item(j).nodeType == ELEMENT_NODE)
+						{
+							if (house_node_list.item(j).nodeName==node_name)
+							{
+								html_text += "<td>"+ house_node_list.item(j).firstChild.nodeValue + "</td>"
+							}
+						}
+				}
+		}
+
+	html_text += "<html><head><title>Real Estate Listings</title></head><body>"
+	html_text += "<table border = 2>"
+
+	var listing = xmlDoc.getElementsByTagName("Listing")
+	
+	if (listing.length == 0)  //decide whether listing is empty
+		{
+			alert("Error in XML File")
+			return 
+		}
+
+	var location = xmlDoc.getElementsByTagName("Location")
+	var listingDetails = xmlDoc.getElementsByTagName("ListingDetails")
+	ELEMENT_NODE = 1
+	
+	for (i=0; i<location.length;i++)
+		{
+			if(location.item(i).nodeName=="Location" && location.item(i).nodeType == ELEMENT_NODE)
+			 	{
+			 		html_text += "<tr ><th colspan='7'><b>Listing</b></th></tr>"
+					html_text += "<tr>"
+					html_text += "<th><b>Location</b></th>"
+					html_text += "<th><b>Street</b></th>"
+					html_text += "<th><b>City</b></th>"
+					html_text += "<th><b>State</b></th>"
+					html_text += "<th><b>Zip</b></th>"
+					html_text += "<th><b>Lat</b></th>"
+					html_text += "<th><b>Long</b></th></tr>"
+					location_node_list = location.item(i).childNodes
+					html_text += "<tr><td></td>"
+					addContents(location_node_list,"StreetAddress")
+					addContents(location_node_list,"City")
+					addContents(location_node_list,"State")
+					addContents(location_node_list,"Zip")
+					addContents(location_node_list,"Lat")
+					addContents(location_node_list,"Long")
+					html_text += "</tr>"
+			 	}
+			 
+			 if(listingDetails.item(i).nodeName=="ListingDetails" && listingDetails.item(i).nodeType == ELEMENT_NODE)		
+			 	{
+			 		html_text += "<tr>"
+					html_text += "<th><b>Details</b></th>"
+					html_text += "<th><b>Status</b></th>"
+					html_text += "<th><b>Price</b></th>"
+					html_text += "<th><b>Lisiting URL</b></th>"
+					html_text += "<th colspan='3'><b>Image</b></th>"
+					html_text += "</tr>"
+					listingDetails_node_list = listingDetails.item(i).childNodes
+					html_text += "<tr><td></td>"
+					addContents(listingDetails_node_list,"Status")
+					addContents(listingDetails_node_list,"Price")
+					for(r=0;r<listingDetails_node_list.length;r++)
+						{
+							if(listingDetails_node_list.item(r).nodeType == ELEMENT_NODE)
+								{
+									if(listingDetails_node_list.item(r).nodeName == "ListingUrl")
+										{
+											html_text+="<td><a href='" + listingDetails_node_list.item(r).firstChild.nodeValue + "' >Link to Listing</td>"
+										}
+								}
+				
+						}
+						
+					for(k=0;k<listingDetails_node_list.length;k++)
+						{
+							if(listingDetails_node_list.item(k).nodeType == ELEMENT_NODE)
+								{
+									if(listingDetails_node_list.item(k).nodeName == "Image")
+									{
+										html_text+="<td colspan = '3'><img width=250 heigth=170 src=\
+										http://cs-server.usc.edu:45678/hw/hw4/" + listingDetails_node_list.item(k).firstChild.nodeValue + " ></td>"
+									}
+								}
+						}
+			 		html_text += "</tr>"			
+				}
+			}
+	html_text+="</table>"
+	html_text+="</bo"+"dy>"
+	html_text+="</html>"		
+	return html_text
+}
+
+</script>
+</head>
+<body>
+	<h1 style="text-align: center;">Enter URL for Real Estate Catalog XML File</h1>
+	<form name="myform">
+		<input type="text" name="URL" maxlength="255" size="100" /><br /><br />
+		<input type="button" name="submit" value="Submit Query" onclick="viewXML(this.form)" />
+	</form>
+<NOSCRIPT>
+</body>
+</html>
