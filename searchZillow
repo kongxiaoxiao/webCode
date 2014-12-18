@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">      <!--doesn't work when html is runned locally-->
+	<head>
+		<title>InformationForHouse</title>
+	    <!--if I place css here,this will be overwritten by bootstrap-->
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>                 <!--Order is important here-->
+        <script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+		<script language="javascript" type="text/javascript">
+		$(document).ready(function(){
+			$("#tableAndHist").hide();
+			$("#invalidAddress").hide();
+			$('#submitForm').validate(
+				 {
+				  rules: {
+				    streetInput: {
+				      required: true
+				    },
+				    cityInput: {
+				      required: true
+				    },
+				    stateInput: {
+				      required: true
+				    }
+				 	}
+				  })
+				  })
+			function viewJson(jsonForm)	
+			{
+				address=jsonForm.streetInput.value
+				city = jsonForm.cityInput.value
+				a=document.getElementById("stateInput")
+				state=a.options[a.selectedIndex].value
+				$.ajax({
+						url:"http://zkong2014-env.elasticbeanstalk.com/",   
+						
+						data:{streetInput:address,
+							  cityInput:city,
+							  stateInput:state},
+						type:'GET',
+						//dataType: "json",
+						//change the html's innerhtml
+						success:function(data){
+							var output = JSON.parse(data);
+							result=output.result;
+							figure=output.figure;
+							if (output.result == null && address!=''&&city!=''&&state!=''){
+            					$("#invalidAddress").show();
+							}
+							else{
+							$("#homedetails").attr("href", output.result.homedetails);
+							$("#location").html(output.result.locations);
+							$("#fulladdress").html(output.result.locations);
+							$("#useCode").html(output.result.useCode);
+							if(output.result.lastSoldPrice=="0.00")
+								{$("#lastSoldPrice").html("N/A");}
+							else
+							{$("#lastSoldPrice").html(output.result.lastSoldPrice);}
+                    		$("#yearBuilt").html(output.result.yearBuilt);
+                    		if (output.result.lastSoldDate=='01-Jan-1970')
+                    			{$("#lastSoldDate").html("N/A");}
+                    		else{$("#lastSoldDate").html(output.result.lastSoldDate);}
+		                    $("#lotSize").html(output.result.lotSize);
+		                    $("#estimateLastUpdate").html("Zestimate &reg Property Estimate as of " + output.result.estimateLastUpdate);
+		                    $("#estimateAmount").html(output.result.estimateAmount);
+		                    $("#finishedArea").html(output.result.finishedArea);
+		                    $("#bathrooms").html(output.result.bathrooms);
+		                    $("#estimateValuationRange").html(output.result.AlltimePropertyRange);
+		                    $("#bedrooms").html(output.result.bedrooms);
+		                    $("#restimateLastUpdate").html("Rent Zestimate &reg Valuation as of " + output.result.restimateLastUpdate);
+		                    $("#restimateAmount").html(output.result.restimateAmount);
+		                    $("#taxAssessmentYear").html(output.result.taxAssessmentYear);
+		                    $("#taxAssessment").html(output.result.taxAssessment);
+		                    $("#restimateValuationRange").html(output.result.AlltimeRentRange);
+		                    img1 = "<img src=\"" + output.result.img1URL + "\" />";
+		                    img2 = "<img src=\"" + output.result.img2URL + "\" />";
+		                    $("#estimateValueChange").html(img1+output.result.valueationChange1);
+		                    $("#restimateValueChange").html(img2+output.result.valueationChange2);
+
+		                    $("#oneyear").attr("src", output.figure["1year"].url);
+                    		$("#fiveyears").attr("src", output.figure["5years"].url);
+                    		$("#tenyears").attr("src", output.figure["10years"].url);
+                    		$(".locationM").html(output.result.locations);
+                    		$("#tableAndHist").show();
+		                }
+						},
+						error:function(){}
+				})
+			}
+			
+
+			 window.fbAsyncInit = function() {
+					    FB.init({
+					      appId      : '725381084197780',
+					      xfbml      : true,
+					      version    : 'v2.2'
+					    });
+					  };
+
+					  (function(d, s, id){
+					     var js, fjs = d.getElementsByTagName(s)[0];
+					     if (d.getElementById(id)) {return;}
+					     js = d.createElement(s); js.id = id;
+					     js.src = "//connect.facebook.net/en_US/sdk.js";
+					     fjs.parentNode.insertBefore(js, fjs);
+					   }(document, 'script', 'facebook-jssdk'));
+
+          //facebook
+			function postToFeed(){
+			FB.ui(
+			  {
+			    method: 'feed',
+			    name: result.locations,
+			    caption: 'Property Information from Zillow.com',
+			    description:'Last Sold Price: '+result.lastSoldPrice+', 30 Days Overall Change: '+result.sign1+result.valueationChange1,
+			    display:'popup',
+			    link:result.homedetails,
+			  	picture: figure['1year'].url,
+			  	//redirect_uri: 'http://zeqiangw-env.elasticbeanstalk.com/'
+			 	 },
+			  function(response) {
+			    if (response && response.post_id) {
+			      alert('Post was published.');
+			    } else {
+			      alert('Post was not published.');
+			    }
+			  }
+			);
+			}
+		</script>
+	</head>
+
+
+
+	<body> 
+		<br>
+		<div class="row">
+        	<div class="col-sm-12">
+          		<span class="info" style="font-size:18px">Search Your Property Here</span>
+        	</div>
+     	</div>
+     	<br>
+		<form class="form-inline" role="form" id="submitForm" onsubmit="return false;">
+            <div class="form-group">
+                <label class="control-label" for="address"><span class="info">Street Address*:</span></label>
+                <input type="text" class="form-control" placeholder="Address" id="streetInput" name="streetInput" autocomplete="on">
+            </div>
+            <div class="form-group">
+                <label class="control-label" for="city"><span class="info">City*:</span></label>
+                <input type="text" class="form-control" placeholder="City" id="cityInput" name="cityInput" autocomplete="on">
+            </div>
+		    <div class="form-group">
+                <label class="control-label" for="state"><span class="info">State*:</span></label>
+                <select type="state" class="form-control" id="stateInput" name="stateInput">
+                    <option value=""></option>
+                    <option value="AK">AK</option>
+                    <option value="AL">AL</option>
+                    <option value="AR">AR</option>
+                    <option value="AZ">AZ</option>
+                    <option value="CA">CA</option>
+                    <option value="CO">CO</option>
+                    <option value="CT">CT</option>
+                    <option value="DC">DC</option>
+                    <option value="DE">DE</option>
+                    <option value="FL">FL</option>
+                    <option value="GA">GA</option>
+                    <option value="HI">HI</option>
+                    <option value="IA">IA</option>
+                    <option value="ID">ID</option>
+                    <option value="IL">IL</option>
+                    <option value="IN">IN</option>
+                    <option value="KS">KS</option>
+                    <option value="KY">KY</option>
+                    <option value="LA">LA</option>
+                    <option value="MA">MA</option>
+                    <option value="MD">MD</option>
+                    <option value="ME">ME</option>
+                    <option value="MI">MI</option>
+                    <option value="MN">MN</option>
+                    <option value="MO">MO</option>
+                    <option value="MS">MS</option>
+                    <option value="MT">MT</option>
+                    <option value="NC">NC</option>
+                    <option value="ND">ND</option>
+                    <option value="NE">NE</option>
+                    <option value="NH">NH</option>
+                    <option value="NJ">NJ</option>
+                    <option value="NM">NM</option>
+                    <option value="NV">NV</option>
+                    <option value="NY">NY</option>
+                    <option value="OH">OH</option>
+                    <option value="OK">OK</option>
+                    <option value="OR">OR</option>
+                    <option value="PA">PA</option>
+                    <option value="RI">RI</option>
+                    <option value="SC">SC</option>
+                    <option value="SD">SD</option>
+                    <option value="TN">TN</option>
+                    <option value="TX">TX</option>
+                    <option value="UT">UT</option>
+                    <option value="VA">VA</option>
+                    <option value="VT">VT</option>
+                    <option value="WA">WA</option>
+                    <option value="WI">WI</option>
+                    <option value="WV">WV</option>
+                    <option value="WY">WY</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-large" style="background-color:#FF9900; border-color:#FF9900" onclick="viewJson(this.form)">Submit</button>
+            </div>
+            <div class="form-group" id="zillowlogo">
+                <img src="http://www.zillow.com/widgets/GetVersionedResource.htm?path=/static/logos/Zillowlogo_150x40.gif" width="130" height="35" alt="Zillow Real Estate Search" />
+            </div>
+        </form>
+        <br>
+        <br>
+        <hr>
+        <div class="row">
+        	<div id="invalidAddress" align="center">
+          		<span id="errorInfo"><strong>No exact match found--Verify that the given address is correct.</strong></span>
+        	</div>
+        </div>
+        <br>
+        
+
+        <div id="tableAndHist" class="row" >
+          <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#table" id="table_info" role="tab" data-toggle="tab" aria-controls="table" aria-expanded="true" >Basic Info</a></li>
+            <li role="presentation"><a aria-expanded="false" href="#hist" role="tab" id="hist_info" data-toggle="tab" aria-controls="hist">Historical Zestimates</a></li>
+          </ul>
+          <div id="TabContent" class="tab-content" >
+				<div role="tabpanel" class="tab-pane fade active in table-responsive" aria-labelledby="table_info" id = "table" style="background-color:white">
+					<table class="table table-stripped">
+						<tr>
+							<td colspan=3>See more details for <a id="homedetails" href="#"><span id="location"></span></a> on zillow</td>
+							<td class="right">
+                    		<button type="button" class="btn btn-primary" onclick="postToFeed()">Share on <b>facebook</b></button>
+                  			</td>
+                  		</tr>
+                  		<tr>
+		                  	<td>Property Type:</td>
+		                  	<td class="right" id="useCode"></td>
+		                  	<td>Last Sold Price:</td>
+		                  	<td class="right" id="lastSoldPrice"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Year Built:</td>
+		                  	<td class="right" id="yearBuilt"></td>
+		                  	<td>Last Sold Date:</td>
+		                  	<td class="right" id="lastSoldDate"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Lot Size:</td>
+		                  	<td class="right" id="lotSize"></td>
+		                  	<td id="estimateLastUpdate">Zestimate &reg Property Estimate as of </td>
+		                  	<td class="right" id="estimateAmount"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Finished Area:</td>
+		                  	<td class="right" id="finishedArea"></td>
+		                  	<td>30 Days Overall Change:</td>
+		                  	<td class="right" id="estimateValueChange"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Bathrooms:</td>
+		                  	<td class="right" id="bathrooms"></td>
+		                  	<td>All Time Property Range:</td>
+		                  	<td class="right" id="estimateValuationRange"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Bedrooms:</td>
+		                  	<td class="right" id="bedrooms"></td>
+		                  	<td id="restimateLastUpdate">Rent Zestimate &reg Valuation as of </td>
+		                  	<td class="right" id="restimateAmount"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Tax Assessment Year:</td>
+		                  	<td class="right" id="taxAssessmentYear"></td>
+		                  	<td>30 Days Rent Change:</td>
+		                  	<td class="right" id="restimateValueChange"></td>
+		                </tr>
+		                <tr>
+		                  	<td>Tax Assessment:</td>
+		                  	<td class="right" id="taxAssessment"></td>
+		                  	<td>All Time Rent Range:</td>
+		                  	<td class="right" id="restimateValuationRange"></td>
+		                </tr>
+		              </table>
+		        </div>
+
+		        <div role="tabpanel" class="tab-pane fade responsive" id="hist" aria-labelledby="hist_info" style="background:white">  <!--It is of great importance to find saurce code in page and change component css-->
+              		<div id="myCarousel" class="carousel slide"> 
+              			 <!--three dots-->
+              			 <ol class="carousel-indicators"> 
+						      <li style="background-color:orange" data-target="#myCarousel" data-slide-to="0" class="active"></li> 
+						      <li style="background-color:orange" data-target="#myCarousel" data-slide-to="1"></li> 
+						      <li style="background-color:orange" data-target="#myCarousel" data-slide-to="2"></li> 
+						 </ol> 
+						      <div class="carousel-inner"> 
+						            <div class="item active" align="center"> 
+						               	<img id = "oneyear"src=""> 
+						                    <div class="carousel-caption"> 
+						                      <h4>Historical Zestimates for the past 1 year</h4> 
+						                      <p class="locationM"></p> 
+						                    </div> 
+						            </div> 
+						        	<div class="item" align="center"> 
+						        		<img id ="fiveyears"src=""> 
+						            		<div class="carousel-caption"> 
+						               		 <h4>Historical Zestimates for the past 5 years</h4> 
+						               		 <p class="locationM"></p> 
+						            		</div> 
+						       		</div> 
+						        	<div class="item" align="center"> 
+						        		<img id = "tenyears"src=""> 
+						            		<div class="carousel-caption"> 
+						              		  <h4>Historical Zestimates for the past 10 years</h4> 
+						              		  <p class="locationM"></p> 
+						            		</div> 
+						        	</div> 
+						      </div> 
+						        <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+						        	<span class="glyphicon glyphicon-chevron-left"></span>   <!--icon arrow-->
+                  					<span class="sr-only">Previous</span></a> 
+						        <a class="right carousel-control" href="#myCarousel" data-slide="next">
+						        	<span class="glyphicon glyphicon-chevron-right"></span>
+                  					<span class="sr-only">Next</span></a> 
+						      </div> 
+              		</div>
+		        </div>
+		        <div class="row">
+          			<div id="disclaimer" align="center">
+            			<span style="color:white">&copy; Zillow, Inc., 2006-2014. Use is subject to <span><a href="http://www.zillow.com/corp/Terms.htm" style="color:orange">Terms of Use</a><br /><a href="http://www.zillow.com/zestimate/"style="color:orange">What's a Zestimate?</a>
+          			</div>
+        		</div>
+		    </div>
+		    <style type="text/css">
+				body{
+						background-image: url('http://www.neovisual.cz/files/V0779-d9.jpg');
+						background-repeat:no-repeat;
+						background-size: 100%;
+					}
+				#title{
+						font-weight:bold;
+						font-size:15px;
+						color:orange;
+					  }
+				.info{
+						font-weight:bold;
+						font-size:12px;
+						color:orange;
+						display: inline-block;
+					  }
+				label.error {
+					    font-weight: bold;
+					    color: red;
+					    border-color: red;
+					    padding: 2px 8px;
+					    margin-top: 2px;
+					    }
+				
+				.locationM{
+					text-align: left;
+					font-size:15px;
+					padding-left:8px;
+						}
+				h4, .h4 {
+					font-weight: bold;
+				    font-size: 15px;
+				    padding-left: 8px;
+				    text-align: left;
+					}
+
+				.carousel-caption{
+			        background: none repeat scroll 0 0 rgba(0, 0, 0, 0.4);
+			        bottom: 0;
+			        left: 0;
+			        padding: 0 15px 10px;
+			        position: absolute;
+			        right: 0;
+			        text-align: left;
+			    		}
+
+			    .carousel-indicators{
+			        text-align: right;
+			        color: orange;
+		    		} 
+
+		    	#errorInfo{
+		    		color:red;
+		    		font-size: 18px;
+		    		}
+
+		    	#facebook{
+		    		background-color:blue;
+		    			border-radius:1px;
+		    		}
+		    	.right{
+		    		text-align:right;
+		    		}
+
+		    	.nav-tabs > li > a {
+		        	background: none repeat scroll 0 0 rgba(255, 147, 5, 0.5); 
+		        	color: white;
+		    		}
+
+
+		    	#tableAndHist
+		    		{
+		    		width:98%;
+		    		margin: auto
+
+		    		}
+
+		    	#zillowlogo{
+		    		position:right
+		    		} 
+    		</style>
+	</body> 
+</html>
+<!--there is facebook initialization here-->
